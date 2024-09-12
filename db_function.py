@@ -2,26 +2,53 @@ import sqlite3
 
 db = 'database.db'
 
-def write_data(table, name, value):
-    conn = sqlite3.connect(db)
-    cur = conn.cursor()
-    
-    query = f'''INSERT INTO {table} ({name})
-                VALUES (LOWER(?))
-                '''
-    
-    cur.execute(query, (value,))
-                
+def create_db(name):
+    conn = sqlite3.connect(f'{name}.db')
     conn.commit()
     conn.close()
     
-def read_spec_data(table, name, value):
+def create_table(db, table, column, typ):
+    typ = typ.upper()
+    conn = sqlite3.connect(f'{db}.db')
+    cur = conn.cursor()
+    
+    query = f'CREATE TABLE IF NOT EXISTS {table} ({column} {typ})'
+    
+    cur.execute(query)
+    conn.commit()
+    conn.close()
+    
+def create_column(db, table, column, typ):
+    typ = typ.upper()
+    conn = sqlite3.connect(f'{db}.db')
+    cur = conn.cursor()
+    
+    query = f'ALTER TABLE {table} ADD COLUMN {column} {typ}'
+    
+    cur.execute(query)
+    conn.commit()
+    conn.close()
+
+
+def write_data(table, column, value):
+    conn = sqlite3.connect(db)
+    cur = conn.cursor()
+    
+    query = f'''INSERT INTO {table} ({column})
+                VALUES LOWER(?)
+                '''
+    
+    cur.execute(query, (value,))            
+    conn.commit()
+    conn.close()
+    
+def read_spec_data(table, column, value):
     conn = sqlite3.connect(db)
     cur = conn.cursor()
     
     query = f'''
                 SELECT * FROM {table}
-                WHERE LOWER({name}) = LOWER(?)
+                WHERE LOWER({column}) = LOWER(?)
                 '''
     
     cur.execute(query, (value,))
@@ -31,11 +58,11 @@ def read_spec_data(table, name, value):
     
     return user
 
-def read_all_data(table):
+def read_all_data(table, column):
     conn = sqlite3.connect(db)
     cur = conn.cursor()
     
-    query = f'SELECT * FROM {table}'
+    query = f'SELECT * FROM {table}' ({column})
     
     cur.execute(query)
     user = cur.fetchall()
@@ -45,21 +72,31 @@ def read_all_data(table):
     return user
 
     
-def delete_data (name):
+def delete_data (column):
     conn = sqlite3.connect(db)
     cur = conn.cursor()
     
     cur.execute('''
                 DELETE FROM utilisateurs
-                WHERE (LOWER)nom = LOWER(?)
-                ''', (name,))
+                WHERE LOWER(nom) = LOWER(?)
+                ''', (column,))
     conn.close()
     
-def delete_all_data (table):
+def delete_all_table (table):
     conn = sqlite3.connect(db)
     cur = conn.cursor()
     
     query = f'DELETE FROM {table}'
+    
+    cur.execute(query)
+    conn.commit()
+    conn.close()
+    
+def delete_all_column (table, column):
+    conn = sqlite3.connect(db)
+    cur = conn.cursor()
+    
+    query = f'DELETE FROM {table} ({column})'
     
     cur.execute(query)
     conn.commit()
@@ -80,12 +117,3 @@ def db_to_list():
     print(tache_list)
     
     conn.close()
-    
-delete_all_data('taches')
-write_data('taches', 'tache', "vaisselle")
-write_data('taches', 'tache', "balai")
-write_data('taches', 'tache', "cuisine")
-write_data('taches', 'tache', "toilette")
-write_data('taches', 'tache', "aspirateur")
-
-print(db_to_list())
